@@ -2,7 +2,7 @@
 import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import TaskCard, { Task } from './TaskCard';
-import { ImageIcon, FileText, Database, Download, Code } from 'lucide-react';
+import { ImageIcon, FileText, Download, Code, ClipboardCheck, FileOutput } from 'lucide-react';
 
 interface TaskPanelProps {
   onTaskClick: (task: Task) => void;
@@ -26,6 +26,14 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ onTaskClick }) => {
       icon: ImageIcon,
       category: 'image',
       color: 'blue'
+    },
+    {
+      id: 'image-replace-bg',
+      title: 'Replace Background',
+      description: 'Replace image background with a new one.',
+      icon: ImageIcon,
+      category: 'image',
+      color: 'blue'
     }
   ];
   
@@ -42,6 +50,14 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ onTaskClick }) => {
       id: 'text-summarize',
       title: 'Text Summarization',
       description: 'Create concise summaries from long text.',
+      icon: FileText,
+      category: 'text',
+      color: 'green'
+    },
+    {
+      id: 'text-to-flowchart',
+      title: 'Text to Flowchart',
+      description: 'Convert text descriptions into flowchart diagrams.',
       icon: FileText,
       category: 'text',
       color: 'green'
@@ -64,6 +80,14 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ onTaskClick }) => {
       icon: Download,
       category: 'export',
       color: 'orange'
+    },
+    {
+      id: 'export-image',
+      title: 'Export to Image',
+      description: 'Save your workflow as JPG or PNG.',
+      icon: FileOutput,
+      category: 'export',
+      color: 'orange'
     }
   ];
   
@@ -75,6 +99,25 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ onTaskClick }) => {
       icon: Code,
       category: 'development',
       color: 'purple'
+    },
+    {
+      id: 'dev-syntax-check',
+      title: 'Syntax Checker',
+      description: 'Validate code syntax and find errors.',
+      icon: ClipboardCheck,
+      category: 'development',
+      color: 'purple'
+    }
+  ];
+
+  const aiTasks: Task[] = [
+    {
+      id: 'ai-resume-generator',
+      title: 'Resume Generator',
+      description: 'Generate professional resumes from your info.',
+      icon: FileText,
+      category: 'data',
+      color: 'red'
     }
   ];
 
@@ -88,6 +131,7 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ onTaskClick }) => {
           <TabsTrigger value="text" className="flex-1">Text</TabsTrigger>
           <TabsTrigger value="export" className="flex-1">Export</TabsTrigger>
           <TabsTrigger value="dev" className="flex-1">Dev</TabsTrigger>
+          <TabsTrigger value="ai" className="flex-1">AI</TabsTrigger>
         </TabsList>
         
         <TabsContent value="image" className="space-y-3 mt-2">
@@ -122,6 +166,16 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ onTaskClick }) => {
         
         <TabsContent value="dev" className="space-y-3 mt-2">
           {developmentTasks.map(task => (
+            <TaskCard 
+              key={task.id} 
+              task={task} 
+              onClick={onTaskClick} 
+            />
+          ))}
+        </TabsContent>
+        
+        <TabsContent value="ai" className="space-y-3 mt-2">
+          {aiTasks.map(task => (
             <TaskCard 
               key={task.id} 
               task={task} 

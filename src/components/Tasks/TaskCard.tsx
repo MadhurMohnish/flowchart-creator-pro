@@ -46,7 +46,8 @@ const TaskCard: React.FC<TaskCardProps> = ({
         `task-${color}`,
         isOnCanvas ? 'min-w-[180px]' : 'w-full',
         isOnCanvas ? 'animate-scale-in' : '',
-        isOnCanvas && 'z-10'
+        isOnCanvas && 'z-10',
+        'relative'
       )}
       style={style}
       draggable={isDraggable}
@@ -68,6 +69,10 @@ const TaskCard: React.FC<TaskCardProps> = ({
           )}
         </div>
       </div>
+      
+      {isOnCanvas && (
+        <div className="absolute -right-2 -bottom-2 h-4 w-4 bg-primary rounded-full opacity-70 hover:opacity-100 transition-opacity" />
+      )}
     </div>
   );
 };

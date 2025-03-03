@@ -12,10 +12,13 @@ import {
   ZoomIn,
   ZoomOut,
   RotateCcw,
+  Save,
+  Download,
   LucideIcon
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Separator } from '@/components/ui/separator';
 
 export type ToolType = 'select' | 'pen' | 'rectangle' | 'circle' | 'text' | 'arrow' | 'image';
 
@@ -26,6 +29,8 @@ interface ToolBarProps {
   onZoomIn: () => void;
   onZoomOut: () => void;
   onUndo: () => void;
+  onSave?: () => void;
+  onExport?: () => void;
 }
 
 interface ToolButtonProps {
@@ -60,7 +65,9 @@ const ToolBar: React.FC<ToolBarProps> = ({
   onClear, 
   onZoomIn, 
   onZoomOut, 
-  onUndo 
+  onUndo,
+  onSave,
+  onExport
 }) => {
   return (
     <div className="absolute left-4 top-1/2 -translate-y-1/2 flex flex-col gap-2 p-2 rounded-xl glass-panel animate-slide-up z-10">
@@ -109,10 +116,15 @@ const ToolBar: React.FC<ToolBarProps> = ({
         />
       </div>
       
-      <div className="space-y-2">
+      <div className="space-y-2 pb-2 border-b border-border/40">
         <ToolButton icon={ZoomIn} label="Zoom In" onClick={onZoomIn} />
         <ToolButton icon={ZoomOut} label="Zoom Out" onClick={onZoomOut} />
         <ToolButton icon={RotateCcw} label="Undo" onClick={onUndo} />
+      </div>
+      
+      <div className="space-y-2">
+        <ToolButton icon={Save} label="Save" onClick={onSave || (() => {})} />
+        <ToolButton icon={Download} label="Export" onClick={onExport || (() => {})} />
         <ToolButton icon={Trash2} label="Clear" onClick={onClear} />
       </div>
     </div>
