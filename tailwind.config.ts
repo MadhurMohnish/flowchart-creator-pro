@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,6 +62,18 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				// Custom colors for our app
+				canvas: {
+					background: '#ffffff',
+					grid: 'rgba(0, 0, 0, 0.05)'
+				},
+				task: {
+					blue: 'rgba(90, 162, 245, 0.95)',
+					green: 'rgba(86, 194, 139, 0.95)',
+					purple: 'rgba(157, 123, 225, 0.95)',
+					orange: 'rgba(255, 145, 77, 0.95)',
+					red: 'rgba(240, 101, 101, 0.95)'
 				}
 			},
 			borderRadius: {
@@ -84,11 +97,58 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'fade-in': {
+					'0%': { opacity: '0', transform: 'translateY(10px)' },
+					'100%': { opacity: '1', transform: 'translateY(0)' }
+				},
+				'fade-out': {
+					'0%': { opacity: '1', transform: 'translateY(0)' },
+					'100%': { opacity: '0', transform: 'translateY(10px)' }
+				},
+				'scale-in': {
+					'0%': { transform: 'scale(0.95)', opacity: '0' },
+					'100%': { transform: 'scale(1)', opacity: '1' }
+				},
+				'slide-up': {
+					'0%': { transform: 'translateY(20px)', opacity: '0' },
+					'100%': { transform: 'translateY(0)', opacity: '1' }
+				},
+				'slide-down': {
+					'0%': { transform: 'translateY(-20px)', opacity: '0' },
+					'100%': { transform: 'translateY(0)', opacity: '1' }
+				},
+				'task-pulse': {
+					'0%, 100%': { boxShadow: '0 0 0 rgba(90, 162, 245, 0)' },
+					'50%': { boxShadow: '0 0 30px rgba(90, 162, 245, 0.3)' }
+				},
+				'connection-draw': {
+					'0%': { strokeDashoffset: '1000' },
+					'100%': { strokeDashoffset: '0' }
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'fade-in': 'fade-in 0.3s ease-out forwards',
+				'fade-out': 'fade-out 0.3s ease-out forwards',
+				'scale-in': 'scale-in 0.2s ease-out forwards',
+				'slide-up': 'slide-up 0.4s ease-out forwards',
+				'slide-down': 'slide-down 0.4s ease-out forwards',
+				'task-pulse': 'task-pulse 2s infinite ease-in-out',
+				'connection-draw': 'connection-draw 0.6s ease-out forwards'
+			},
+			fontFamily: {
+				sans: [
+					'SF Pro Display',
+					'ui-sans-serif',
+					'system-ui',
+					'-apple-system',
+					'BlinkMacSystemFont',
+					'Segoe UI',
+					'Roboto',
+					'sans-serif'
+				]
 			}
 		}
 	},
