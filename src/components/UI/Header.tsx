@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { 
@@ -7,14 +8,9 @@ import {
   Settings, 
   HelpCircle,
   Upload,
-  LogOut,
-  User,
   LucideIcon 
 } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
-import UserAvatar from '@/components/Auth/UserAvatar';
 
 interface HeaderButtonProps {
   icon: LucideIcon;
@@ -35,9 +31,6 @@ const HeaderButton: React.FC<HeaderButtonProps> = ({ icon: Icon, label, onClick 
 );
 
 const Header: React.FC = () => {
-  const { user, signOut } = useAuth();
-  const navigate = useNavigate();
-
   const handleSave = () => {
     // Save workflow to localStorage
     const workflow = localStorage.getItem('flowAI_workflow');
@@ -112,22 +105,6 @@ const Header: React.FC = () => {
     });
   };
 
-  const handleSignOut = async () => {
-    await signOut();
-    navigate('/auth');
-  };
-
-  const handleProfile = () => {
-    toast({
-      title: 'Coming soon',
-      description: 'Profile functionality will be available in a future update.',
-    });
-  };
-
-  const handleAuthAction = () => {
-    navigate('/auth');
-  };
-
   return (
     <header className="w-full px-4 py-3 border-b border-border/40 flex items-center justify-between animate-fade-in">
       <div className="flex items-center">
@@ -142,35 +119,9 @@ const Header: React.FC = () => {
           <HeaderButton icon={Download} label="Export" onClick={handleExport} />
         </div>
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1">
         <HeaderButton icon={Settings} label="Settings" onClick={handleSettings} />
         <HeaderButton icon={HelpCircle} label="Help" onClick={handleHelp} />
-        
-        {user ? (
-          <div className="flex items-center gap-2">
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={handleProfile}
-              className="flex items-center gap-2"
-            >
-              <UserAvatar user={user} size="sm" />
-              <span className="hidden sm:inline">{user.email?.split('@')[0]}</span>
-            </Button>
-            
-            <HeaderButton icon={LogOut} label="Logout" onClick={handleSignOut} />
-          </div>
-        ) : (
-          <Button 
-            variant="default" 
-            size="sm" 
-            onClick={handleAuthAction}
-            className="flex items-center gap-1"
-          >
-            <User className="h-4 w-4" />
-            <span>Login</span>
-          </Button>
-        )}
       </div>
     </header>
   );
