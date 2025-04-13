@@ -17,7 +17,7 @@ import TaskCard, { Task } from './TaskCard';
 import BackgroundRemovalCard from './BackgroundRemovalCard';
 
 // Sample task data for demonstration
-const imageTasks = [
+const imageTasks: Task[] = [
   {
     id: 'resize-image',
     title: 'Resize Image',
@@ -36,7 +36,7 @@ const imageTasks = [
   },
 ];
 
-const textTasks = [
+const textTasks: Task[] = [
   {
     id: 'extract-text',
     title: 'Extract Text',
@@ -55,7 +55,7 @@ const textTasks = [
   },
 ];
 
-const dataTasks = [
+const dataTasks: Task[] = [
   {
     id: 'csv-parser',
     title: 'CSV Parser',
@@ -74,7 +74,7 @@ const dataTasks = [
   },
 ];
 
-const exportTasks = [
+const exportTasks: Task[] = [
   {
     id: 'export-pdf',
     title: 'Export to PDF',
@@ -93,7 +93,7 @@ const exportTasks = [
   },
 ];
 
-const devTasks = [
+const devTasks: Task[] = [
   {
     id: 'custom-code',
     title: 'Custom Code',
