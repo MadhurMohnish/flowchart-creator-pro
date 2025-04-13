@@ -1,8 +1,9 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import ToolBar, { ToolType } from './ToolBar';
 import TaskCard, { Task } from '../Tasks/TaskCard';
+import CanvasPopup from './CanvasPopup';
 import { toast } from '@/components/ui/use-toast';
+import { useNavigate } from 'react-router-dom';
 
 interface CanvasAreaProps {
   onAddTask: (task: Task, position: { x: number; y: number }) => void;
@@ -37,6 +38,12 @@ interface TextElement {
   color: string;
 }
 
+interface PopupState {
+  isOpen: boolean;
+  position: { x: number; y: number };
+  taskId: string;
+}
+
 const CanvasArea: React.FC<CanvasAreaProps> = ({ onAddTask }) => {
   const [activeTool, setActiveTool] = useState<ToolType>('select');
   const [zoom, setZoom] = useState(1);
@@ -50,10 +57,14 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({ onAddTask }) => {
   const [drawingColor, setDrawingColor] = useState('#000000');
   const [drawingWidth, setDrawingWidth] = useState(2);
   const [currentShape, setCurrentShape] = useState<ShapeElement | null>(null);
-  
+  const [popup, setPopup] = useState<PopupState>({
+    isOpen: false,
+    position: { x: 0, y: 0 },
+    taskId: '',
+  });
   const canvasRef = useRef<HTMLDivElement>(null);
-  
-  // Handle zooming
+  const navigate = useNavigate();
+
   const handleZoomIn = () => {
     setZoom(prev => Math.min(prev + 0.1, 2));
   };
@@ -62,7 +73,6 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({ onAddTask }) => {
     setZoom(prev => Math.max(prev - 0.1, 0.5));
   };
 
-  // Handle clearing the canvas
   const handleClear = () => {
     if (tasks.length > 0 || connections.length > 0 || paths.length > 0 || shapes.length > 0 || texts.length > 0) {
       if (confirm('Are you sure you want to clear the canvas? This action cannot be undone.')) {
@@ -79,7 +89,6 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({ onAddTask }) => {
     }
   };
 
-  // Handle undo (placeholder for now)
   const handleUndo = () => {
     if (paths.length > 0) {
       setPaths(paths.slice(0, -1));
@@ -89,7 +98,6 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({ onAddTask }) => {
       setTexts(texts.slice(0, -1));
     } else if (tasks.length > 0) {
       setTasks(tasks.slice(0, -1));
-      // Also remove any connections associated with the removed task
       const lastTask = tasks[tasks.length - 1];
       setConnections(connections.filter(
         conn => conn.start !== lastTask.task.id && conn.end !== lastTask.task.id
@@ -97,7 +105,6 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({ onAddTask }) => {
     }
   };
 
-  // Handle task dropping on canvas
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     const taskData = e.dataTransfer.getData('task');
@@ -119,7 +126,14 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({ onAddTask }) => {
           setTasks(prev => [...prev, newTask]);
           onAddTask(task, { x, y });
           
-          // Auto-connect with nearest task if exists
+          if (task.id === 'extract-text') {
+            setPopup({
+              isOpen: true,
+              position: { x: x + 100, y: y - 50 },
+              taskId: task.id,
+            });
+          }
+          
           if (tasks.length > 0) {
             const nearestTask = findNearestTask({ x, y });
             if (nearestTask && calculateDistance(nearestTask.position, { x, y }) < 200) {
@@ -136,7 +150,6 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({ onAddTask }) => {
     }
   };
 
-  // Handle mouse move during drawing
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!isDrawing || activeTool === 'select') return;
     
@@ -157,7 +170,6 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({ onAddTask }) => {
     }
   };
 
-  // Handle mouse down to start drawing
   const handleMouseDown = (e: React.MouseEvent) => {
     if (activeTool === 'select') return;
     
@@ -194,7 +206,6 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({ onAddTask }) => {
     }
   };
 
-  // Handle mouse up to finish drawing
   const handleMouseUp = () => {
     if (!isDrawing) return;
     
@@ -214,7 +225,6 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({ onAddTask }) => {
     }
   };
 
-  // Find the nearest task to a position
   const findNearestTask = (position: { x: number; y: number }) => {
     if (tasks.length === 0) return null;
     
@@ -232,17 +242,14 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({ onAddTask }) => {
     return nearestTask;
   };
 
-  // Calculate distance between two points
   const calculateDistance = (p1: { x: number; y: number }, p2: { x: number; y: number }) => {
     return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
   };
 
-  // Handle drag over
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
   };
 
-  // Convert the current path to SVG path data
   const currentPathToSvgPath = () => {
     if (currentPath.length < 2) return '';
     
@@ -251,7 +258,6 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({ onAddTask }) => {
     }, '');
   };
 
-  // Save workflow to local storage
   const saveToLocalStorage = () => {
     const workflow = {
       tasks,
@@ -278,7 +284,6 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({ onAddTask }) => {
     }
   };
 
-  // Load workflow from local storage
   const loadFromLocalStorage = () => {
     try {
       const savedWorkflow = localStorage.getItem('flowAI_workflow');
@@ -308,8 +313,7 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({ onAddTask }) => {
       });
     }
   };
-  
-  // Save workflow when window is about to unload
+
   useEffect(() => {
     const handleBeforeUnload = () => {
       if (tasks.length > 0 || paths.length > 0 || shapes.length > 0 || texts.length > 0) {
@@ -320,7 +324,31 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({ onAddTask }) => {
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [tasks, paths, shapes, texts]);
-  
+
+  const handlePopupClose = () => {
+    setPopup(prev => ({ ...prev, isOpen: false }));
+  };
+
+  const handleImageUpload = (file: File) => {
+    toast({
+      title: 'Image uploaded',
+      description: 'Processing your image...',
+    });
+    
+    if (popup.taskId === 'extract-text') {
+      const reader = new FileReader();
+      reader.onload = () => {
+        sessionStorage.setItem('ocrImage', reader.result as string);
+        setPopup(prev => ({ ...prev, isOpen: false }));
+        const taskObj = tasks.find(t => t.task.id === 'extract-text');
+        if (taskObj) {
+          navigate('/', { state: { selectedTaskId: 'extract-text' } });
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   return (
     <div className="flex-1 relative overflow-hidden">
       <ToolBar 
@@ -347,16 +375,14 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({ onAddTask }) => {
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
       >
-        {/* Draw connections between tasks */}
         <svg className="absolute inset-0 pointer-events-none z-0 w-full h-full">
-          {/* Draw connections between tasks */}
           {connections.map((connection, index) => {
             const startTask = tasks.find(t => t.task.id === connection.start);
             const endTask = tasks.find(t => t.task.id === connection.end);
             
             if (!startTask || !endTask) return null;
             
-            const startX = startTask.position.x + 90; // Center of task card
+            const startX = startTask.position.x + 90;
             const startY = startTask.position.y + 25;
             const endX = endTask.position.x;
             const endY = endTask.position.y + 25;
@@ -380,7 +406,6 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({ onAddTask }) => {
             );
           })}
           
-          {/* Draw saved paths */}
           {paths.map((pathObj, index) => (
             <path
               key={`drawing-path-${index}`}
@@ -395,7 +420,6 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({ onAddTask }) => {
             />
           ))}
           
-          {/* Draw current path while drawing */}
           {isDrawing && activeTool === 'pen' && (
             <path
               d={currentPathToSvgPath()}
@@ -407,7 +431,6 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({ onAddTask }) => {
             />
           )}
           
-          {/* Draw saved shapes */}
           {shapes.map((shape, index) => (
             shape.type === 'rectangle' ? (
               <rect
@@ -434,7 +457,6 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({ onAddTask }) => {
             )
           ))}
           
-          {/* Draw current shape while drawing */}
           {isDrawing && (activeTool === 'rectangle' || activeTool === 'circle') && currentShape && (
             currentShape.type === 'rectangle' ? (
               <rect
@@ -459,7 +481,6 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({ onAddTask }) => {
             )
           )}
           
-          {/* Draw text elements */}
           {texts.map((textEl, index) => (
             <text
               key={`text-${index}`}
@@ -474,7 +495,6 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({ onAddTask }) => {
           ))}
         </svg>
         
-        {/* Render tasks on canvas */}
         {tasks.map((canvasTask, index) => (
           <TaskCard
             key={`canvas-task-${canvasTask.task.id}-${index}`}
@@ -482,14 +502,33 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({ onAddTask }) => {
             position={canvasTask.position}
             isOnCanvas={true}
             onClick={() => {
-              // Will implement task configuration in future versions
-              toast({
-                title: 'Task selected',
-                description: `${canvasTask.task.title} configuration will be available in a future update.`,
-              });
+              if (canvasTask.task.id === 'extract-text') {
+                setPopup({
+                  isOpen: true,
+                  position: { 
+                    x: canvasTask.position.x + 100, 
+                    y: canvasTask.position.y - 50 
+                  },
+                  taskId: canvasTask.task.id,
+                });
+              } else {
+                toast({
+                  title: 'Task selected',
+                  description: `${canvasTask.task.title} configuration will be available in a future update.`,
+                });
+              }
             }}
           />
         ))}
+        
+        {popup.isOpen && (
+          <CanvasPopup
+            position={popup.position}
+            onClose={handlePopupClose}
+            onImageUpload={handleImageUpload}
+            title={popup.taskId === 'extract-text' ? 'Upload Image for Text Extraction' : 'Upload Image'}
+          />
+        )}
       </div>
     </div>
   );

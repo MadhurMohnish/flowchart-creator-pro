@@ -4,9 +4,11 @@ import Header from '@/components/UI/Header';
 import CanvasArea from '@/components/Canvas/CanvasArea';
 import TaskPanel from '@/components/Tasks/TaskPanel';
 import BackgroundRemovalTask from '@/components/Tasks/BackgroundRemovalTask';
+import ExtractTextTask from '@/components/Tasks/ExtractTextTask';
 import { Task } from '@/components/Tasks/TaskCard';
 import { toast } from '@/components/ui/use-toast';
 import { backgroundRemovalTask } from '@/components/Tasks/BackgroundRemovalCard';
+import { extractTextTask } from '@/components/Tasks/ExtractTextCard';
 
 const Index = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -36,7 +38,9 @@ const Index = () => {
     toast({
       title: `${task.title} selected`,
       description: task.id === 'background-removal' 
-        ? 'Use this tool to remove backgrounds from your images.' 
+        ? 'Use this tool to remove backgrounds from your images.'
+        : task.id === 'extract-text'
+        ? 'Use this tool to extract text from your images.'
         : 'Drag this task to the canvas to add it to your workflow.',
     });
   };
@@ -55,6 +59,8 @@ const Index = () => {
     switch (selectedTask.id) {
       case 'background-removal':
         return <BackgroundRemovalTask />;
+      case 'extract-text':
+        return <ExtractTextTask />;
       default:
         return null;
     }
@@ -65,7 +71,7 @@ const Index = () => {
       <Header />
       
       <div className="flex flex-1 overflow-hidden">
-        {selectedTask?.id === 'background-removal' ? (
+        {(selectedTask?.id === 'background-removal' || selectedTask?.id === 'extract-text') ? (
           <div className="flex-1 p-4 overflow-y-auto">
             {renderSelectedTaskComponent()}
           </div>

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
@@ -15,6 +14,7 @@ import {
 } from 'lucide-react';
 import TaskCard, { Task } from './TaskCard';
 import BackgroundRemovalCard from './BackgroundRemovalCard';
+import ExtractTextCard from './ExtractTextCard';
 
 // Sample task data for demonstration
 const imageTasks: Task[] = [
@@ -37,14 +37,6 @@ const imageTasks: Task[] = [
 ];
 
 const textTasks: Task[] = [
-  {
-    id: 'extract-text',
-    title: 'Extract Text',
-    description: 'Extract text from images using OCR',
-    icon: Type,
-    category: 'text',
-    color: 'green',
-  },
   {
     id: 'translate-text',
     title: 'Translate Text',
@@ -218,6 +210,7 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ onTaskClick }) => {
             
             <TabsContent value="text" className="p-4 space-y-4 mt-0">
               <div className="space-y-2">
+                <ExtractTextCard onClick={onTaskClick} />
                 {textTasks.map((task) => (
                   <TaskCard
                     key={task.id}
