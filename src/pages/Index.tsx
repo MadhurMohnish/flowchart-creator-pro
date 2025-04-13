@@ -3,12 +3,15 @@ import React, { useState, useEffect } from 'react';
 import Header from '@/components/UI/Header';
 import CanvasArea from '@/components/Canvas/CanvasArea';
 import TaskPanel from '@/components/Tasks/TaskPanel';
+import BackgroundRemovalTask from '@/components/Tasks/BackgroundRemovalTask';
 import { Task } from '@/components/Tasks/TaskCard';
 import { toast } from '@/components/ui/use-toast';
+import { backgroundRemovalTask } from '@/components/Tasks/BackgroundRemovalCard';
 
 const Index = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [canvasReady, setCanvasReady] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
   useEffect(() => {
     // Set canvas as ready after a short delay to let everything render
@@ -28,9 +31,13 @@ const Index = () => {
   }, []);
 
   const handleTaskClick = (task: Task) => {
+    setSelectedTask(task);
+    
     toast({
       title: `${task.title} selected`,
-      description: 'Drag this task to the canvas to add it to your workflow.',
+      description: task.id === 'background-removal' 
+        ? 'Use this tool to remove backgrounds from your images.' 
+        : 'Drag this task to the canvas to add it to your workflow.',
     });
   };
 
@@ -42,16 +49,33 @@ const Index = () => {
     setTasks(prev => [...prev, task]);
   };
 
+  const renderSelectedTaskComponent = () => {
+    if (!selectedTask) return null;
+    
+    switch (selectedTask.id) {
+      case 'background-removal':
+        return <BackgroundRemovalTask />;
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className="flex flex-col h-screen bg-background">
       <Header />
       
       <div className="flex flex-1 overflow-hidden">
-        <CanvasArea onAddTask={handleAddTask} />
+        {selectedTask?.id === 'background-removal' ? (
+          <div className="flex-1 p-4 overflow-y-auto">
+            {renderSelectedTaskComponent()}
+          </div>
+        ) : (
+          <CanvasArea onAddTask={handleAddTask} />
+        )}
         <TaskPanel onTaskClick={handleTaskClick} />
       </div>
       
-      {canvasReady && (
+      {canvasReady && !selectedTask && (
         <div className="fixed bottom-4 right-4 bg-white/80 backdrop-blur-sm rounded-lg px-4 py-3 shadow-lg border border-border/30 animate-fade-in z-50">
           <h3 className="text-sm font-medium mb-1">Getting Started</h3>
           <p className="text-xs text-muted-foreground">
