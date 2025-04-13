@@ -11,6 +11,9 @@ import {
   LucideIcon 
 } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
+import { UserAvatar } from '@/components/Auth/UserAvatar';
+import { useAuth } from '@/contexts/AuthContext';
+import { Link } from 'react-router-dom';
 
 interface HeaderButtonProps {
   icon: LucideIcon;
@@ -31,6 +34,8 @@ const HeaderButton: React.FC<HeaderButtonProps> = ({ icon: Icon, label, onClick 
 );
 
 const Header: React.FC = () => {
+  const { user } = useAuth();
+
   const handleSave = () => {
     // Save workflow to localStorage
     const workflow = localStorage.getItem('flowAI_workflow');
@@ -122,6 +127,13 @@ const Header: React.FC = () => {
       <div className="flex items-center gap-1">
         <HeaderButton icon={Settings} label="Settings" onClick={handleSettings} />
         <HeaderButton icon={HelpCircle} label="Help" onClick={handleHelp} />
+        {user ? (
+          <UserAvatar />
+        ) : (
+          <Button variant="outline" size="sm" asChild>
+            <Link to="/auth">Login</Link>
+          </Button>
+        )}
       </div>
     </header>
   );
