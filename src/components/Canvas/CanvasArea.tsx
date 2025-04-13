@@ -1,47 +1,20 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import ToolBar, { ToolType } from './ToolBar';
-import TaskCard, { Task } from '../Tasks/TaskCard';
+import { Task } from '../Tasks/TaskCard';
 import CanvasPopup from './CanvasPopup';
 import { toast } from '@/components/ui/use-toast';
 import { useNavigate } from 'react-router-dom';
+import CanvasConnections from './CanvasConnections';
+import CanvasDrawings from './CanvasDrawings';
+import CanvasShapes from './CanvasShapes';
+import CanvasTexts from './CanvasTexts';
+import CanvasTasks from './CanvasTasks';
+import { calculateDistance, saveToLocalStorage, loadFromLocalStorage } from './utils/canvasUtils';
+import { CanvasTask, DrawingPath, ShapeElement, TextElement, PopupState } from './types';
 
 interface CanvasAreaProps {
   onAddTask: (task: Task, position: { x: number; y: number }) => void;
-}
-
-interface CanvasTask {
-  task: Task;
-  position: { x: number; y: number };
-}
-
-interface DrawingPath {
-  path: { x: number; y: number }[];
-  tool: ToolType;
-  color: string;
-  width: number;
-}
-
-interface ShapeElement {
-  type: 'rectangle' | 'circle';
-  startX: number;
-  startY: number;
-  endX: number;
-  endY: number;
-  color: string;
-  width: number;
-}
-
-interface TextElement {
-  position: { x: number; y: number };
-  content: string;
-  fontSize: number;
-  color: string;
-}
-
-interface PopupState {
-  isOpen: boolean;
-  position: { x: number; y: number };
-  taskId: string;
 }
 
 const CanvasArea: React.FC<CanvasAreaProps> = ({ onAddTask }) => {
@@ -103,6 +76,23 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({ onAddTask }) => {
         conn => conn.start !== lastTask.task.id && conn.end !== lastTask.task.id
       ));
     }
+  };
+
+  const findNearestTask = (position: { x: number; y: number }) => {
+    if (tasks.length === 0) return null;
+    
+    let nearestTask = tasks[0];
+    let minDistance = calculateDistance(tasks[0].position, position);
+    
+    for (let i = 1; i < tasks.length; i++) {
+      const distance = calculateDistance(tasks[i].position, position);
+      if (distance < minDistance) {
+        minDistance = distance;
+        nearestTask = tasks[i];
+      }
+    }
+    
+    return nearestTask;
   };
 
   const handleDrop = (e: React.DragEvent) => {
@@ -225,57 +215,25 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({ onAddTask }) => {
     }
   };
 
-  const findNearestTask = (position: { x: number; y: number }) => {
-    if (tasks.length === 0) return null;
-    
-    let nearestTask = tasks[0];
-    let minDistance = calculateDistance(tasks[0].position, position);
-    
-    for (let i = 1; i < tasks.length; i++) {
-      const distance = calculateDistance(tasks[i].position, position);
-      if (distance < minDistance) {
-        minDistance = distance;
-        nearestTask = tasks[i];
-      }
-    }
-    
-    return nearestTask;
-  };
-
-  const calculateDistance = (p1: { x: number; y: number }, p2: { x: number; y: number }) => {
-    return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
-  };
-
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
   };
 
-  const currentPathToSvgPath = () => {
-    if (currentPath.length < 2) return '';
-    
-    return currentPath.reduce((path, point, index) => {
-      return path + (index === 0 ? `M ${point.x} ${point.y}` : ` L ${point.x} ${point.y}`);
-    }, '');
-  };
-
-  const saveToLocalStorage = () => {
-    const workflow = {
+  const handleSaveToLocalStorage = () => {
+    const result = saveToLocalStorage({
       tasks,
       connections,
       paths,
       shapes,
-      texts,
-      timestamp: new Date().toISOString()
-    };
+      texts
+    });
     
-    try {
-      localStorage.setItem('flowAI_workflow', JSON.stringify(workflow));
+    if (result.success) {
       toast({
         title: 'Workflow saved',
         description: 'Your workflow has been saved to browser storage.'
       });
-    } catch (error) {
-      console.error('Error saving to localStorage:', error);
+    } else {
       toast({
         title: 'Save failed',
         description: 'Failed to save workflow. Your browser storage might be full.',
@@ -284,49 +242,46 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({ onAddTask }) => {
     }
   };
 
-  const loadFromLocalStorage = () => {
-    try {
-      const savedWorkflow = localStorage.getItem('flowAI_workflow');
-      if (savedWorkflow) {
-        const { tasks: savedTasks, connections: savedConnections, paths: savedPaths, shapes: savedShapes, texts: savedTexts } = JSON.parse(savedWorkflow);
-        setTasks(savedTasks);
-        setConnections(savedConnections);
-        setPaths(savedPaths);
-        setShapes(savedShapes);
-        setTexts(savedTexts);
-        toast({
-          title: 'Workflow loaded',
-          description: 'Your workflow has been loaded from browser storage.'
-        });
-      } else {
-        toast({
-          title: 'No workflow found',
-          description: 'No saved workflow found in browser storage.'
-        });
-      }
-    } catch (error) {
-      console.error('Error loading from localStorage:', error);
+  const handleLoadFromLocalStorage = () => {
+    const result = loadFromLocalStorage();
+    
+    if (result.success) {
+      const { tasks: savedTasks, connections: savedConnections, paths: savedPaths, shapes: savedShapes, texts: savedTexts } = result.data;
+      setTasks(savedTasks);
+      setConnections(savedConnections);
+      setPaths(savedPaths);
+      setShapes(savedShapes);
+      setTexts(savedTexts);
       toast({
-        title: 'Load failed',
-        description: 'Failed to load workflow.',
+        title: 'Workflow loaded',
+        description: 'Your workflow has been loaded from browser storage.'
+      });
+    } else {
+      toast({
+        title: 'No workflow found',
+        description: result.error || 'Error loading workflow',
         variant: 'destructive'
       });
     }
   };
 
-  useEffect(() => {
-    const handleBeforeUnload = () => {
-      if (tasks.length > 0 || paths.length > 0 || shapes.length > 0 || texts.length > 0) {
-        saveToLocalStorage();
-      }
-    };
-    
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [tasks, paths, shapes, texts]);
-
   const handlePopupClose = () => {
     setPopup(prev => ({ ...prev, isOpen: false }));
+  };
+
+  const handleTaskClick = (taskId: string, position: { x: number; y: number }) => {
+    if (taskId === 'extract-text') {
+      setPopup({
+        isOpen: true,
+        position,
+        taskId,
+      });
+    } else {
+      toast({
+        title: 'Task selected',
+        description: `${taskId} configuration will be available in a future update.`,
+      });
+    }
   };
 
   const handleImageUpload = (file: File) => {
@@ -349,6 +304,17 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({ onAddTask }) => {
     }
   };
 
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (tasks.length > 0 || paths.length > 0 || shapes.length > 0 || texts.length > 0) {
+        handleSaveToLocalStorage();
+      }
+    };
+    
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [tasks, paths, shapes, texts]);
+
   return (
     <div className="flex-1 relative overflow-hidden">
       <ToolBar 
@@ -358,6 +324,8 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({ onAddTask }) => {
         onZoomIn={handleZoomIn}
         onZoomOut={handleZoomOut}
         onUndo={handleUndo}
+        onSave={handleSaveToLocalStorage}
+        onExport={handleLoadFromLocalStorage}
       />
       
       <div 
@@ -376,150 +344,25 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({ onAddTask }) => {
         onMouseLeave={handleMouseUp}
       >
         <svg className="absolute inset-0 pointer-events-none z-0 w-full h-full">
-          {connections.map((connection, index) => {
-            const startTask = tasks.find(t => t.task.id === connection.start);
-            const endTask = tasks.find(t => t.task.id === connection.end);
-            
-            if (!startTask || !endTask) return null;
-            
-            const startX = startTask.position.x + 90;
-            const startY = startTask.position.y + 25;
-            const endX = endTask.position.x;
-            const endY = endTask.position.y + 25;
-            
-            return (
-              <g key={`connection-${index}`}>
-                <path
-                  d={`M ${startX} ${startY} C ${startX + 50} ${startY}, ${endX - 50} ${endY}, ${endX} ${endY}`}
-                  fill="none"
-                  stroke="rgba(90, 162, 245, 0.6)"
-                  strokeWidth="2"
-                  className="connection-line"
-                />
-                <circle 
-                  cx={endX} 
-                  cy={endY} 
-                  r="3" 
-                  fill="rgba(90, 162, 245, 0.9)" 
-                />
-              </g>
-            );
-          })}
-          
-          {paths.map((pathObj, index) => (
-            <path
-              key={`drawing-path-${index}`}
-              d={pathObj.path.reduce((pathData, point, i) => (
-                pathData + (i === 0 ? `M ${point.x} ${point.y}` : ` L ${point.x} ${point.y}`)
-              ), '')}
-              stroke={pathObj.color}
-              strokeWidth={pathObj.width}
-              fill="none"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          ))}
-          
-          {isDrawing && activeTool === 'pen' && (
-            <path
-              d={currentPathToSvgPath()}
-              stroke={drawingColor}
-              strokeWidth={drawingWidth}
-              fill="none"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          )}
-          
-          {shapes.map((shape, index) => (
-            shape.type === 'rectangle' ? (
-              <rect
-                key={`shape-rect-${index}`}
-                x={Math.min(shape.startX, shape.endX)}
-                y={Math.min(shape.startY, shape.endY)}
-                width={Math.abs(shape.endX - shape.startX)}
-                height={Math.abs(shape.endY - shape.startY)}
-                stroke={shape.color}
-                strokeWidth={shape.width}
-                fill="none"
-              />
-            ) : (
-              <ellipse
-                key={`shape-circle-${index}`}
-                cx={(shape.startX + shape.endX) / 2}
-                cy={(shape.startY + shape.endY) / 2}
-                rx={Math.abs(shape.endX - shape.startX) / 2}
-                ry={Math.abs(shape.endY - shape.startY) / 2}
-                stroke={shape.color}
-                strokeWidth={shape.width}
-                fill="none"
-              />
-            )
-          ))}
-          
-          {isDrawing && (activeTool === 'rectangle' || activeTool === 'circle') && currentShape && (
-            currentShape.type === 'rectangle' ? (
-              <rect
-                x={Math.min(currentShape.startX, currentShape.endX)}
-                y={Math.min(currentShape.startY, currentShape.endY)}
-                width={Math.abs(currentShape.endX - currentShape.startX)}
-                height={Math.abs(currentShape.endY - currentShape.startY)}
-                stroke={currentShape.color}
-                strokeWidth={currentShape.width}
-                fill="none"
-              />
-            ) : (
-              <ellipse
-                cx={(currentShape.startX + currentShape.endX) / 2}
-                cy={(currentShape.startY + currentShape.endY) / 2}
-                rx={Math.abs(currentShape.endX - currentShape.startX) / 2}
-                ry={Math.abs(currentShape.endY - currentShape.startY) / 2}
-                stroke={currentShape.color}
-                strokeWidth={currentShape.width}
-                fill="none"
-              />
-            )
-          )}
-          
-          {texts.map((textEl, index) => (
-            <text
-              key={`text-${index}`}
-              x={textEl.position.x}
-              y={textEl.position.y}
-              fontSize={textEl.fontSize}
-              fill={textEl.color}
-              style={{ userSelect: 'none' }}
-            >
-              {textEl.content}
-            </text>
-          ))}
+          <CanvasConnections connections={connections} tasks={tasks} />
+          <CanvasDrawings 
+            paths={paths} 
+            currentPath={currentPath}
+            isDrawing={isDrawing}
+            activeTool={activeTool}
+            drawingColor={drawingColor}
+            drawingWidth={drawingWidth}
+          />
+          <CanvasShapes 
+            shapes={shapes}
+            currentShape={currentShape}
+            isDrawing={isDrawing}
+            activeTool={activeTool}
+          />
+          <CanvasTexts texts={texts} />
         </svg>
         
-        {tasks.map((canvasTask, index) => (
-          <TaskCard
-            key={`canvas-task-${canvasTask.task.id}-${index}`}
-            task={canvasTask.task}
-            position={canvasTask.position}
-            isOnCanvas={true}
-            onClick={() => {
-              if (canvasTask.task.id === 'extract-text') {
-                setPopup({
-                  isOpen: true,
-                  position: { 
-                    x: canvasTask.position.x + 100, 
-                    y: canvasTask.position.y - 50 
-                  },
-                  taskId: canvasTask.task.id,
-                });
-              } else {
-                toast({
-                  title: 'Task selected',
-                  description: `${canvasTask.task.title} configuration will be available in a future update.`,
-                });
-              }
-            }}
-          />
-        ))}
+        <CanvasTasks tasks={tasks} onTaskClick={handleTaskClick} />
         
         {popup.isOpen && (
           <CanvasPopup
