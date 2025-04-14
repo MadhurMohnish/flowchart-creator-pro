@@ -30,7 +30,40 @@ const TaskCard: React.FC<TaskCardProps> = ({
   const { title, description, icon: Icon, color } = task;
   
   const handleDragStart = (e: React.DragEvent) => {
-    e.dataTransfer.setData('task', JSON.stringify(task));
+    try {
+      // Set the task data as JSON string
+      const taskData = JSON.stringify(task);
+      e.dataTransfer.setData('task', taskData);
+      
+      // Create a drag image to improve the user experience
+      if (!isOnCanvas && e.target instanceof HTMLElement) {
+        e.dataTransfer.effectAllowed = 'copy';
+        
+        // Optional: set a custom drag image
+        const dragIcon = document.createElement('div');
+        dragIcon.classList.add('bg-white', 'p-2', 'rounded', 'shadow', 'border');
+        dragIcon.textContent = title;
+        document.body.appendChild(dragIcon);
+        e.dataTransfer.setDragImage(dragIcon, 0, 0);
+        
+        // Clean up the element after the drag operation
+        setTimeout(() => {
+          if (dragIcon.parentNode) {
+            document.body.removeChild(dragIcon);
+          }
+        }, 100);
+      }
+    } catch (error) {
+      console.error("Error in drag start:", error);
+    }
+  };
+
+  const handleClick = (e: React.MouseEvent) => {
+    try {
+      onClick(task);
+    } catch (error) {
+      console.error("Error in task click:", error);
+    }
   };
 
   const style = position ? {
@@ -52,7 +85,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
       style={style}
       draggable={isDraggable}
       onDragStart={handleDragStart}
-      onClick={() => onClick(task)}
+      onClick={handleClick}
     >
       <div className="flex items-start gap-3">
         <div className={cn(

@@ -17,13 +17,21 @@ interface ExtractTextCardProps {
 }
 
 const ExtractTextCard: React.FC<ExtractTextCardProps> = ({ onClick }) => {
+  const handleDragStart = (e: React.DragEvent) => {
+    try {
+      const taskData = JSON.stringify(extractTextTask);
+      e.dataTransfer.setData('task', taskData);
+      e.dataTransfer.effectAllowed = 'copy';
+    } catch (error) {
+      console.error("Error in ExtractTextCard drag start:", error);
+    }
+  };
+  
   return (
     <div 
       className="task-card task-green relative cursor-pointer animate-fade-in"
       draggable
-      onDragStart={(e) => {
-        e.dataTransfer.setData('task', JSON.stringify(extractTextTask));
-      }}
+      onDragStart={handleDragStart}
       onClick={() => onClick(extractTextTask)}
     >
       <div className="flex items-start gap-3">

@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import ToolBar, { ToolType } from './ToolBar';
 import { Task } from '../Tasks/TaskCard';
@@ -99,44 +98,64 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({ onAddTask }) => {
     e.preventDefault();
     const taskData = e.dataTransfer.getData('task');
     
-    if (taskData) {
-      try {
-        const task = JSON.parse(taskData) as Task;
-        const canvasRect = canvasRef.current?.getBoundingClientRect();
-        
-        if (canvasRect) {
-          const x = (e.clientX - canvasRect.left) / zoom;
-          const y = (e.clientY - canvasRect.top) / zoom;
-          
-          const newTask = {
-            task,
-            position: { x, y }
-          };
-          
-          setTasks(prev => [...prev, newTask]);
-          onAddTask(task, { x, y });
-          
-          if (task.id === 'extract-text') {
-            setPopup({
-              isOpen: true,
-              position: { x: x + 100, y: y - 50 },
-              taskId: task.id,
-            });
-          }
-          
-          if (tasks.length > 0) {
-            const nearestTask = findNearestTask({ x, y });
-            if (nearestTask && calculateDistance(nearestTask.position, { x, y }) < 200) {
-              setConnections(prev => [...prev, { 
-                start: nearestTask.task.id, 
-                end: task.id 
-              }]);
-            }
-          }
-        }
-      } catch (error) {
-        console.error('Error adding task to canvas:', error);
+    if (!taskData) {
+      console.log("No task data found in drop event");
+      return;
+    }
+    
+    try {
+      const task = JSON.parse(taskData) as Task;
+      const canvasRect = canvasRef.current?.getBoundingClientRect();
+      
+      if (!canvasRect) {
+        console.log("Canvas reference not available");
+        return;
       }
+      
+      const x = (e.clientX - canvasRect.left) / zoom;
+      const y = (e.clientY - canvasRect.top) / zoom;
+      
+      const newTask = {
+        task,
+        position: { x, y }
+      };
+      
+      setTasks(prev => [...prev, newTask]);
+      
+      try {
+        onAddTask(task, { x, y });
+      } catch (error) {
+        console.error("Error in onAddTask callback:", error);
+      }
+      
+      if (task.id === 'extract-text') {
+        setPopup({
+          isOpen: true,
+          position: { x: x + 100, y: y - 50 },
+          taskId: task.id,
+        });
+      }
+      
+      if (tasks.length > 0) {
+        try {
+          const nearestTask = findNearestTask({ x, y });
+          if (nearestTask && calculateDistance(nearestTask.position, { x, y }) < 200) {
+            setConnections(prev => [...prev, { 
+              start: nearestTask.task.id, 
+              end: task.id 
+            }]);
+          }
+        } catch (error) {
+          console.error("Error adding connection:", error);
+        }
+      }
+    } catch (error) {
+      console.error('Error processing dropped task:', error);
+      toast({
+        title: 'Error',
+        description: 'Could not add task to canvas. Please try again.',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -314,6 +333,20 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({ onAddTask }) => {
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [tasks, paths, shapes, texts]);
+
+  useEffect(() => {
+    const handleError = (error: ErrorEvent) => {
+      console.error('Canvas error caught:', error.message);
+      toast({
+        title: 'Something went wrong',
+        description: 'An error occurred while rendering the canvas. Try refreshing the page.',
+        variant: 'destructive',
+      });
+    };
+
+    window.addEventListener('error', handleError);
+    return () => window.removeEventListener('error', handleError);
+  }, []);
 
   return (
     <div className="flex-1 relative overflow-hidden">
