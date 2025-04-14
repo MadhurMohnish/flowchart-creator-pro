@@ -14,6 +14,7 @@ import { toast } from '@/components/ui/use-toast';
 import { UserAvatar } from '@/components/Auth/UserAvatar';
 import { useAuth } from '@/contexts/AuthContext';
 import { Link } from 'react-router-dom';
+import { exportCanvasAsImage } from '@/utils/canvasExport';
 
 interface HeaderButtonProps {
   icon: LucideIcon;
@@ -54,32 +55,9 @@ const Header: React.FC = () => {
   };
 
   const handleLoad = () => {
-    // Load workflow from localStorage
-    const workflow = localStorage.getItem('flowAI_workflow');
-    if (workflow) {
-      try {
-        // Parse to validate JSON
-        JSON.parse(workflow);
-        // We just validated it, the CanvasArea component does the actual loading
-        toast({
-          title: 'Workflow loaded',
-          description: 'Your workflow has been loaded from browser storage.',
-        });
-        // Reload the page to load the workflow
-        window.location.reload();
-      } catch (error) {
-        toast({
-          title: 'Error loading workflow',
-          description: 'The saved workflow is invalid or corrupted.',
-          variant: 'destructive',
-        });
-      }
-    } else {
-      toast({
-        title: 'No workflow found',
-        description: 'No saved workflow found in browser storage.',
-      });
-    }
+    // Show saved workflows dialog
+    const savedWorkflowsEvent = new CustomEvent('showSavedWorkflows');
+    window.dispatchEvent(savedWorkflowsEvent);
   };
 
   const handleShare = () => {
@@ -90,10 +68,7 @@ const Header: React.FC = () => {
   };
 
   const handleExport = () => {
-    toast({
-      title: 'Coming soon',
-      description: 'Export functionality will be available in a future update.',
-    });
+    exportCanvasAsImage();
   };
 
   const handleSettings = () => {
@@ -104,10 +79,8 @@ const Header: React.FC = () => {
   };
 
   const handleHelp = () => {
-    toast({
-      title: 'Help',
-      description: 'Drag AI tasks from the right panel to the canvas. Use the tools on the left for drawing annotations.',
-    });
+    // Redirect to GitHub repository
+    window.open('https://github.com/flow-ai/flow-ai', '_blank');
   };
 
   return (
@@ -128,7 +101,9 @@ const Header: React.FC = () => {
         <HeaderButton icon={Settings} label="Settings" onClick={handleSettings} />
         <HeaderButton icon={HelpCircle} label="Help" onClick={handleHelp} />
         {user ? (
-          <UserAvatar />
+          <Link to="/profile">
+            <UserAvatar />
+          </Link>
         ) : (
           <Button variant="outline" size="sm" asChild>
             <Link to="/auth">Login</Link>

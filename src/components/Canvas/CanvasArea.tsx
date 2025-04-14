@@ -12,6 +12,7 @@ import CanvasTexts from './CanvasTexts';
 import CanvasTasks from './CanvasTasks';
 import CanvasDropZone from './CanvasDropZone';
 import CanvasInteractions from './CanvasInteractions';
+import SavedWorkflows from './SavedWorkflows';
 import { calculateDistance, saveToLocalStorage, loadFromLocalStorage } from './utils/canvasUtils';
 import { CanvasTask, DrawingPath, ShapeElement, TextElement, PopupState } from './types';
 
@@ -147,20 +148,45 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({ onAddTask }) => {
   };
 
   const handleSaveToLocalStorage = () => {
-    const result = saveToLocalStorage({
+    // Create a unique ID for the workflow
+    const workflowId = `workflow_${Date.now()}`;
+    
+    // Prompt for workflow name
+    const workflowName = prompt('Enter a name for this workflow:', `Workflow ${new Date().toLocaleString()}`);
+    
+    if (!workflowName) return; // User cancelled
+    
+    const workflowData = {
+      name: workflowName,
       tasks,
       connections,
       paths,
       shapes,
-      texts
-    });
+      texts,
+      timestamp: new Date().toISOString()
+    };
     
-    if (result.success) {
-      toast({
-        title: 'Workflow saved',
-        description: 'Your workflow has been saved to browser storage.'
-      });
-    } else {
+    // Save to both default storage and as a named workflow
+    const defaultResult = saveToLocalStorage(workflowData);
+    
+    try {
+      // Save as a named workflow
+      localStorage.setItem(`flowAI_workflow_${workflowId}`, JSON.stringify(workflowData));
+      
+      if (defaultResult.success) {
+        toast({
+          title: 'Workflow saved',
+          description: `Your workflow "${workflowName}" has been saved.`
+        });
+      } else {
+        toast({
+          title: 'Save partially successful',
+          description: 'Your workflow was saved but not set as the default.',
+          variant: 'destructive'
+        });
+      }
+    } catch (error) {
+      console.error('Error saving workflow:', error);
       toast({
         title: 'Save failed',
         description: 'Failed to save workflow. Your browser storage might be full.',
@@ -170,26 +196,9 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({ onAddTask }) => {
   };
 
   const handleLoadFromLocalStorage = () => {
-    const result = loadFromLocalStorage();
-    
-    if (result.success) {
-      const { tasks: savedTasks, connections: savedConnections, paths: savedPaths, shapes: savedShapes, texts: savedTexts } = result.data;
-      setTasks(savedTasks);
-      setConnections(savedConnections);
-      setPaths(savedPaths);
-      setShapes(savedShapes);
-      setTexts(savedTexts);
-      toast({
-        title: 'Workflow loaded',
-        description: 'Your workflow has been loaded from browser storage.'
-      });
-    } else {
-      toast({
-        title: 'No workflow found',
-        description: result.error || 'Error loading workflow',
-        variant: 'destructive'
-      });
-    }
+    // This now just triggers the SavedWorkflows dialog to open
+    const savedWorkflowsEvent = new CustomEvent('showSavedWorkflows');
+    window.dispatchEvent(savedWorkflowsEvent);
   };
 
   const handlePopupClose = () => {
@@ -287,13 +296,22 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({ onAddTask }) => {
   useEffect(() => {
     const handleBeforeUnload = () => {
       if (tasks.length > 0 || paths.length > 0 || shapes.length > 0 || texts.length > 0) {
-        handleSaveToLocalStorage();
+        const workflowData = {
+          name: 'Auto-saved Workflow',
+          tasks,
+          connections,
+          paths,
+          shapes,
+          texts,
+          timestamp: new Date().toISOString()
+        };
+        saveToLocalStorage(workflowData);
       }
     };
     
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [tasks, paths, shapes, texts]);
+  }, [tasks, paths, shapes, texts, connections]);
 
   useEffect(() => {
     const handleError = (error: ErrorEvent) => {
@@ -307,6 +325,20 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({ onAddTask }) => {
 
     window.addEventListener('error', handleError);
     return () => window.removeEventListener('error', handleError);
+  }, []);
+
+  useEffect(() => {
+    // Load saved workflow from localStorage on first render
+    const result = loadFromLocalStorage();
+    
+    if (result.success) {
+      const { tasks: savedTasks, connections: savedConnections, paths: savedPaths, shapes: savedShapes, texts: savedTexts } = result.data;
+      setTasks(savedTasks);
+      setConnections(savedConnections);
+      setPaths(savedPaths);
+      setShapes(savedShapes);
+      setTexts(savedTexts);
+    }
   }, []);
 
   return (
@@ -367,6 +399,8 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({ onAddTask }) => {
           )}
         </CanvasInteractions>
       </CanvasDropZone>
+      
+      <SavedWorkflows />
     </div>
   );
 };
