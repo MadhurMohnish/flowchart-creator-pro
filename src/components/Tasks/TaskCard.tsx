@@ -34,12 +34,10 @@ const TaskCard: React.FC<TaskCardProps> = ({
       // Set the task data as JSON string
       const taskData = JSON.stringify(task);
       e.dataTransfer.setData('task', taskData);
+      e.dataTransfer.effectAllowed = 'copy';
       
-      // Create a drag image to improve the user experience
+      // Optional: set a custom drag image for better UX
       if (!isOnCanvas && e.target instanceof HTMLElement) {
-        e.dataTransfer.effectAllowed = 'copy';
-        
-        // Optional: set a custom drag image
         const dragIcon = document.createElement('div');
         dragIcon.classList.add('bg-white', 'p-2', 'rounded', 'shadow', 'border');
         dragIcon.textContent = title;
@@ -80,7 +78,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
         isOnCanvas ? 'min-w-[180px]' : 'w-full',
         isOnCanvas ? 'animate-scale-in' : '',
         isOnCanvas && 'z-10',
-        'relative'
+        'relative cursor-pointer'
       )}
       style={style}
       draggable={isDraggable}

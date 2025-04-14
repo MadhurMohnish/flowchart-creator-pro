@@ -1,4 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import ToolBar, { ToolType } from './ToolBar';
 import { Task } from '../Tasks/TaskCard';
 import CanvasPopup from './CanvasPopup';
@@ -9,6 +10,8 @@ import CanvasDrawings from './CanvasDrawings';
 import CanvasShapes from './CanvasShapes';
 import CanvasTexts from './CanvasTexts';
 import CanvasTasks from './CanvasTasks';
+import CanvasDropZone from './CanvasDropZone';
+import CanvasInteractions from './CanvasInteractions';
 import { calculateDistance, saveToLocalStorage, loadFromLocalStorage } from './utils/canvasUtils';
 import { CanvasTask, DrawingPath, ShapeElement, TextElement, PopupState } from './types';
 
@@ -34,7 +37,6 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({ onAddTask }) => {
     position: { x: 0, y: 0 },
     taskId: '',
   });
-  const canvasRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
   const handleZoomIn = () => {
@@ -94,36 +96,17 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({ onAddTask }) => {
     return nearestTask;
   };
 
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    const taskData = e.dataTransfer.getData('task');
-    
-    if (!taskData) {
-      console.log("No task data found in drop event");
-      return;
-    }
-    
+  const handleDrop = (task: Task, position: { x: number; y: number }) => {
     try {
-      const task = JSON.parse(taskData) as Task;
-      const canvasRect = canvasRef.current?.getBoundingClientRect();
-      
-      if (!canvasRect) {
-        console.log("Canvas reference not available");
-        return;
-      }
-      
-      const x = (e.clientX - canvasRect.left) / zoom;
-      const y = (e.clientY - canvasRect.top) / zoom;
-      
       const newTask = {
         task,
-        position: { x, y }
+        position
       };
       
       setTasks(prev => [...prev, newTask]);
       
       try {
-        onAddTask(task, { x, y });
+        onAddTask(task, position);
       } catch (error) {
         console.error("Error in onAddTask callback:", error);
       }
@@ -131,15 +114,15 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({ onAddTask }) => {
       if (task.id === 'extract-text') {
         setPopup({
           isOpen: true,
-          position: { x: x + 100, y: y - 50 },
+          position: { x: position.x + 100, y: position.y - 50 },
           taskId: task.id,
         });
       }
       
       if (tasks.length > 0) {
         try {
-          const nearestTask = findNearestTask({ x, y });
-          if (nearestTask && calculateDistance(nearestTask.position, { x, y }) < 200) {
+          const nearestTask = findNearestTask(position);
+          if (nearestTask && calculateDistance(nearestTask.position, position) < 200) {
             setConnections(prev => [...prev, { 
               start: nearestTask.task.id, 
               end: task.id 
@@ -156,81 +139,6 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({ onAddTask }) => {
         description: 'Could not add task to canvas. Please try again.',
         variant: 'destructive',
       });
-    }
-  };
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDrawing || activeTool === 'select') return;
-    
-    const canvasRect = canvasRef.current?.getBoundingClientRect();
-    if (!canvasRect) return;
-    
-    const x = (e.clientX - canvasRect.left) / zoom;
-    const y = (e.clientY - canvasRect.top) / zoom;
-    
-    if (activeTool === 'pen') {
-      setCurrentPath(prev => [...prev, { x, y }]);
-    } else if ((activeTool === 'rectangle' || activeTool === 'circle') && currentShape) {
-      setCurrentShape({
-        ...currentShape,
-        endX: x,
-        endY: y
-      });
-    }
-  };
-
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (activeTool === 'select') return;
-    
-    const canvasRect = canvasRef.current?.getBoundingClientRect();
-    if (!canvasRect) return;
-    
-    const x = (e.clientX - canvasRect.left) / zoom;
-    const y = (e.clientY - canvasRect.top) / zoom;
-    
-    setIsDrawing(true);
-    
-    if (activeTool === 'pen') {
-      setCurrentPath([{ x, y }]);
-    } else if (activeTool === 'rectangle' || activeTool === 'circle') {
-      setCurrentShape({
-        type: activeTool === 'rectangle' ? 'rectangle' : 'circle',
-        startX: x,
-        startY: y,
-        endX: x,
-        endY: y,
-        color: drawingColor,
-        width: drawingWidth
-      });
-    } else if (activeTool === 'text') {
-      const content = prompt('Enter text:');
-      if (content) {
-        setTexts(prev => [...prev, {
-          position: { x, y },
-          content,
-          fontSize: 16,
-          color: drawingColor
-        }]);
-      }
-    }
-  };
-
-  const handleMouseUp = () => {
-    if (!isDrawing) return;
-    
-    setIsDrawing(false);
-    
-    if (activeTool === 'pen' && currentPath.length > 1) {
-      setPaths(prev => [...prev, {
-        path: currentPath,
-        tool: activeTool,
-        color: drawingColor,
-        width: drawingWidth
-      }]);
-      setCurrentPath([]);
-    } else if ((activeTool === 'rectangle' || activeTool === 'circle') && currentShape) {
-      setShapes(prev => [...prev, currentShape]);
-      setCurrentShape(null);
     }
   };
 
@@ -323,6 +231,59 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({ onAddTask }) => {
     }
   };
 
+  const handleMouseDown = (x: number, y: number) => {
+    if (activeTool === 'pen') {
+      setCurrentPath([{ x, y }]);
+    } else if (activeTool === 'rectangle' || activeTool === 'circle') {
+      setCurrentShape({
+        type: activeTool === 'rectangle' ? 'rectangle' : 'circle',
+        startX: x,
+        startY: y,
+        endX: x,
+        endY: y,
+        color: drawingColor,
+        width: drawingWidth
+      });
+    } else if (activeTool === 'text') {
+      const content = prompt('Enter text:');
+      if (content) {
+        setTexts(prev => [...prev, {
+          position: { x, y },
+          content,
+          fontSize: 16,
+          color: drawingColor
+        }]);
+      }
+    }
+  };
+
+  const handleMouseMove = (x: number, y: number) => {
+    if (activeTool === 'pen') {
+      setCurrentPath(prev => [...prev, { x, y }]);
+    } else if ((activeTool === 'rectangle' || activeTool === 'circle') && currentShape) {
+      setCurrentShape({
+        ...currentShape,
+        endX: x,
+        endY: y
+      });
+    }
+  };
+
+  const handleMouseUp = () => {
+    if (activeTool === 'pen' && currentPath.length > 1) {
+      setPaths(prev => [...prev, {
+        path: currentPath,
+        tool: activeTool,
+        color: drawingColor,
+        width: drawingWidth
+      }]);
+      setCurrentPath([]);
+    } else if ((activeTool === 'rectangle' || activeTool === 'circle') && currentShape) {
+      setShapes(prev => [...prev, currentShape]);
+      setCurrentShape(null);
+    }
+  };
+
   useEffect(() => {
     const handleBeforeUnload = () => {
       if (tasks.length > 0 || paths.length > 0 || shapes.length > 0 || texts.length > 0) {
@@ -361,51 +322,51 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({ onAddTask }) => {
         onExport={handleLoadFromLocalStorage}
       />
       
-      <div 
-        ref={canvasRef}
-        className="w-full h-full canvas-grid bg-canvas-background"
-        style={{ 
-          transform: `scale(${zoom})`,
-          transformOrigin: 'center',
-          transition: 'transform 0.2s ease-out'
-        }}
+      <CanvasDropZone 
         onDrop={handleDrop}
         onDragOver={handleDragOver}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
+        zoom={zoom}
       >
-        <svg className="absolute inset-0 pointer-events-none z-0 w-full h-full">
-          <CanvasConnections connections={connections} tasks={tasks} />
-          <CanvasDrawings 
-            paths={paths} 
-            currentPath={currentPath}
-            isDrawing={isDrawing}
-            activeTool={activeTool}
-            drawingColor={drawingColor}
-            drawingWidth={drawingWidth}
-          />
-          <CanvasShapes 
-            shapes={shapes}
-            currentShape={currentShape}
-            isDrawing={isDrawing}
-            activeTool={activeTool}
-          />
-          <CanvasTexts texts={texts} />
-        </svg>
-        
-        <CanvasTasks tasks={tasks} onTaskClick={handleTaskClick} />
-        
-        {popup.isOpen && (
-          <CanvasPopup
-            position={popup.position}
-            onClose={handlePopupClose}
-            onImageUpload={handleImageUpload}
-            title={popup.taskId === 'extract-text' ? 'Upload Image for Text Extraction' : 'Upload Image'}
-          />
-        )}
-      </div>
+        <CanvasInteractions
+          activeTool={activeTool}
+          isDrawing={isDrawing}
+          setIsDrawing={setIsDrawing}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          zoom={zoom}
+        >
+          <svg className="absolute inset-0 pointer-events-none z-0 w-full h-full">
+            <CanvasConnections connections={connections} tasks={tasks} />
+            <CanvasDrawings 
+              paths={paths} 
+              currentPath={currentPath}
+              isDrawing={isDrawing}
+              activeTool={activeTool}
+              drawingColor={drawingColor}
+              drawingWidth={drawingWidth}
+            />
+            <CanvasShapes 
+              shapes={shapes}
+              currentShape={currentShape}
+              isDrawing={isDrawing}
+              activeTool={activeTool}
+            />
+            <CanvasTexts texts={texts} />
+          </svg>
+          
+          <CanvasTasks tasks={tasks} onTaskClick={handleTaskClick} />
+          
+          {popup.isOpen && (
+            <CanvasPopup
+              position={popup.position}
+              onClose={handlePopupClose}
+              onImageUpload={handleImageUpload}
+              title={popup.taskId === 'extract-text' ? 'Upload Image for Text Extraction' : 'Upload Image'}
+            />
+          )}
+        </CanvasInteractions>
+      </CanvasDropZone>
     </div>
   );
 };
