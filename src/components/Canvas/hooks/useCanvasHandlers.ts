@@ -1,4 +1,3 @@
-
 import { useNavigate } from 'react-router-dom';
 import { toast } from '@/components/ui/use-toast';
 import { Task } from '../../Tasks/TaskCard';
@@ -98,18 +97,22 @@ export const useCanvasHandlers = (
       description: 'Processing your image...',
     });
     
-    if (popup.taskId === 'extract-text') {
-      const reader = new FileReader();
-      reader.onload = () => {
-        sessionStorage.setItem('ocrImage', reader.result as string);
-        setPopup(prev => ({ ...prev, isOpen: false }));
-        const taskObj = tasks.find(t => t.task.id === 'extract-text');
-        if (taskObj) {
-          navigate('/', { state: { selectedTaskId: 'extract-text' } });
-        }
-      };
-      reader.readAsDataURL(file);
-    }
+    setPopup(prevPopup => {
+      if (prevPopup.taskId === 'extract-text') {
+        const reader = new FileReader();
+        reader.onload = () => {
+          sessionStorage.setItem('ocrImage', reader.result as string);
+          setPopup(prev => ({ ...prev, isOpen: false }));
+          const taskObj = tasks.find(t => t.task.id === 'extract-text');
+          if (taskObj) {
+            navigate('/', { state: { selectedTaskId: 'extract-text' } });
+          }
+        };
+        reader.readAsDataURL(file);
+      }
+      
+      return prevPopup;
+    });
   };
 
   return {
