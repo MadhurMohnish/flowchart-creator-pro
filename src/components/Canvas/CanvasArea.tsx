@@ -16,6 +16,7 @@ import { useCanvasState } from './hooks/useCanvasState';
 import { useCanvasHandlers } from './hooks/useCanvasHandlers';
 import { useCanvasDrawing } from './hooks/useCanvasDrawing';
 import { toast } from '@/components/ui/use-toast';
+import { ToolType } from './types';
 
 interface CanvasAreaProps {
   onAddTask: (task: Task, position: { x: number; y: number }) => void;
@@ -50,7 +51,7 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({ onAddTask }) => {
     handleUndo
   } = useCanvasState();
 
-  const [activeTool, setActiveTool] = React.useState<'select' | 'pen' | 'rectangle' | 'circle' | 'text' | 'arrow' | 'image'>('select');
+  const [activeTool, setActiveTool] = React.useState<ToolType>('select');
 
   const {
     handleDrop,

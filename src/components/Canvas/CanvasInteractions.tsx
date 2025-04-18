@@ -6,8 +6,8 @@ interface CanvasInteractionsProps {
   activeTool: ToolType;
   isDrawing: boolean;
   setIsDrawing: (isDrawing: boolean) => void;
-  onMouseDown: (x: number, y: number) => void;
-  onMouseMove: (x: number, y: number) => void;
+  onMouseDown: (e: React.MouseEvent) => void;
+  onMouseMove: (e: React.MouseEvent) => void;
   onMouseUp: () => void;
   zoom: number;
   children: React.ReactNode;
@@ -25,45 +25,14 @@ const CanvasInteractions: React.FC<CanvasInteractionsProps> = ({
 }) => {
   const canvasRef = React.useRef<HTMLDivElement>(null);
 
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (activeTool === 'select') return;
-    
-    const canvasRect = canvasRef.current?.getBoundingClientRect();
-    if (!canvasRect) return;
-    
-    const x = (e.clientX - canvasRect.left) / zoom;
-    const y = (e.clientY - canvasRect.top) / zoom;
-    
-    setIsDrawing(true);
-    onMouseDown(x, y);
-  };
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDrawing || activeTool === 'select') return;
-    
-    const canvasRect = canvasRef.current?.getBoundingClientRect();
-    if (!canvasRect) return;
-    
-    const x = (e.clientX - canvasRect.left) / zoom;
-    const y = (e.clientY - canvasRect.top) / zoom;
-    
-    onMouseMove(x, y);
-  };
-
-  const handleMouseUp = () => {
-    if (!isDrawing) return;
-    setIsDrawing(false);
-    onMouseUp();
-  };
-
   return (
     <div 
       ref={canvasRef}
       className="w-full h-full relative"
-      onMouseDown={handleMouseDown}
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseUp}
+      onMouseDown={onMouseDown}
+      onMouseMove={onMouseMove}
+      onMouseUp={onMouseUp}
+      onMouseLeave={onMouseUp}
     >
       {children}
     </div>

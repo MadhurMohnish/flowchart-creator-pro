@@ -1,5 +1,6 @@
-import React from 'react';
-import { DrawingPath, ShapeElement, TextElement } from '../types';
+
+import React, { useState } from 'react';
+import { DrawingPath, ShapeElement, TextElement, ToolType } from '../types';
 
 export const useCanvasDrawing = (
   activeTool: string,
@@ -11,6 +12,11 @@ export const useCanvasDrawing = (
   drawingColor: string,
   drawingWidth: number
 ) => {
+  // Add local state to track the current shape being drawn
+  const [localCurrentShape, setLocalCurrentShape] = useState<ShapeElement | null>(null);
+  // Add local state to track the current path being drawn
+  const [localCurrentPath, setLocalCurrentPath] = useState<{ x: number; y: number }[]>([]);
+
   const handleMouseDown = (e: React.MouseEvent) => {
     const rect = (e.target as HTMLElement).getBoundingClientRect();
     const x = e.clientX - rect.left;
@@ -18,26 +24,42 @@ export const useCanvasDrawing = (
 
     if (activeTool === 'pen') {
       setCurrentPath([{ x, y }]);
+      setLocalCurrentPath([{ x, y }]);
     } else if (activeTool === 'rectangle' || activeTool === 'circle') {
-      setCurrentShape({ type: activeTool, x, y, width: 0, height: 0, color: drawingColor });
+      const newShape: ShapeElement = { 
+        type: activeTool as 'rectangle' | 'circle', 
+        startX: x, 
+        startY: y, 
+        endX: x, 
+        endY: y, 
+        color: drawingColor,
+        width: drawingWidth
+      };
+      setCurrentShape(newShape);
+      setLocalCurrentShape(newShape);
     } else if (activeTool === 'text') {
-      setTexts(prev => [...prev, { x, y, content: 'New Text', color: drawingColor }]);
+      setTexts(prev => [...prev, { 
+        position: { x, y }, 
+        content: 'New Text', 
+        fontSize: 16, 
+        color: drawingColor 
+      }]);
     }
     
     if (activeTool === 'eraser') {
-      const rect = (e.target as HTMLElement).getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
       setCurrentPath([{ x, y }]);
+      setLocalCurrentPath([{ x, y }]);
     }
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
+    const rect = (e.target as HTMLElement).getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
     if (activeTool === 'eraser') {
-      const rect = (e.target as HTMLElement).getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
       setCurrentPath(prev => [...prev, { x, y }]);
+      setLocalCurrentPath(prev => [...prev, { x, y }]);
       
       // Remove paths that intersect with the eraser
       setPaths(prevPaths => {
@@ -50,29 +72,37 @@ export const useCanvasDrawing = (
       });
     }
     
-    const rect = (e.target as HTMLElement).getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-
     if (activeTool === 'pen') {
       setCurrentPath(prev => [...prev, { x, y }]);
+      setLocalCurrentPath(prev => [...prev, { x, y }]);
     } else if (activeTool === 'rectangle' || activeTool === 'circle') {
-      if (currentShape) {
-        const width = x - currentShape.x;
-        const height = y - currentShape.y;
-        setCurrentShape(prev => prev && ({ ...prev, width: Math.abs(width), height: Math.abs(height) }));
+      if (localCurrentShape) {
+        const updatedShape = {
+          ...localCurrentShape,
+          endX: x,
+          endY: y
+        };
+        setCurrentShape(updatedShape);
+        setLocalCurrentShape(updatedShape);
       }
     }
   };
 
   const handleMouseUp = () => {
     if (activeTool === 'pen') {
-      setPaths(prev => [...prev, { path: currentPath, color: drawingColor, width: drawingWidth }]);
+      setPaths(prev => [...prev, { 
+        path: localCurrentPath, 
+        tool: 'pen' as ToolType, 
+        color: drawingColor, 
+        width: drawingWidth 
+      }]);
       setCurrentPath([]);
+      setLocalCurrentPath([]);
     } else if (activeTool === 'rectangle' || activeTool === 'circle') {
-      if (currentShape) {
-        setShapes(prev => [...prev, currentShape]);
+      if (localCurrentShape) {
+        setShapes(prev => [...prev, localCurrentShape]);
         setCurrentShape(null);
+        setLocalCurrentShape(null);
       }
     }
   };

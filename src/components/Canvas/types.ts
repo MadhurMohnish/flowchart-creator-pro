@@ -36,4 +36,4 @@ export interface PopupState {
   taskId: string;
 }
 
-export type ToolType = 'select' | 'pen' | 'rectangle' | 'circle' | 'text' | 'arrow' | 'image';
+export type ToolType = 'select' | 'pen' | 'rectangle' | 'circle' | 'text' | 'arrow' | 'image' | 'eraser';
