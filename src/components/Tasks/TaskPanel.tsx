@@ -15,8 +15,9 @@ import {
 import TaskCard, { Task } from './TaskCard';
 import BackgroundRemovalCard from './BackgroundRemovalCard';
 import ExtractTextCard from './ExtractTextCard';
+import ImageResizeCard from './ImageResizeCard';
+import ImageCropCard from './ImageCropCard';
 
-// Sample task data for demonstration
 const imageTasks: Task[] = [
   {
     id: 'resize-image',
@@ -198,6 +199,8 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ onTaskClick }) => {
             <TabsContent value="image" className="p-4 space-y-4 mt-0">
               <div className="space-y-2">
                 <BackgroundRemovalCard onClick={onTaskClick} />
+                <ImageResizeCard onClick={onTaskClick} />
+                <ImageCropCard onClick={onTaskClick} />
                 {imageTasks.map((task) => (
                   <TaskCard
                     key={task.id}

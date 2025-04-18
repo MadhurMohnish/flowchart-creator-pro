@@ -5,10 +5,10 @@ import CanvasArea from '@/components/Canvas/CanvasArea';
 import TaskPanel from '@/components/Tasks/TaskPanel';
 import BackgroundRemovalTask from '@/components/Tasks/BackgroundRemovalTask';
 import ExtractTextTask from '@/components/Tasks/ExtractTextTask';
+import ImageResizeTask from '@/components/Tasks/ImageResizeTask';
+import ImageCropTask from '@/components/Tasks/ImageCropTask';
 import { Task } from '@/components/Tasks/TaskCard';
 import { toast } from '@/components/ui/use-toast';
-import { backgroundRemovalTask } from '@/components/Tasks/BackgroundRemovalCard';
-import { extractTextTask } from '@/components/Tasks/ExtractTextCard';
 
 const Index = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -61,6 +61,10 @@ const Index = () => {
         return <BackgroundRemovalTask />;
       case 'extract-text':
         return <ExtractTextTask />;
+      case 'resize-image':
+        return <ImageResizeTask />;
+      case 'crop-image':
+        return <ImageCropTask />;
       default:
         return null;
     }
