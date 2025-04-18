@@ -134,7 +134,7 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ onTaskClick }) => {
   };
   
   return (
-    <div className="h-full w-80 border-l border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <div className="h-full w-96 border-l border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="p-4 border-b border-border/40">
         <h2 className="text-lg font-medium">Tasks</h2>
         <p className="text-xs text-muted-foreground">Drag tasks to the canvas</p>
@@ -164,7 +164,7 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ onTaskClick }) => {
         <ScrollArea className="h-[calc(100%-8rem)]">
           <div className="p-4 space-y-4">
             <h3 className="text-sm font-medium">Search Results</h3>
-            <div className="space-y-2">
+            <div className="space-y-3">
               {filteredTasks.map((task) => (
                 <TaskCard
                   key={task.id}
@@ -197,7 +197,7 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ onTaskClick }) => {
           
           <ScrollArea className="h-[calc(100%-8rem)]">
             <TabsContent value="image" className="p-4 space-y-4 mt-0">
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <BackgroundRemovalCard onClick={onTaskClick} />
                 <ImageResizeCard onClick={onTaskClick} />
                 <ImageCropCard onClick={onTaskClick} />
@@ -212,7 +212,7 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ onTaskClick }) => {
             </TabsContent>
             
             <TabsContent value="text" className="p-4 space-y-4 mt-0">
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <ExtractTextCard onClick={onTaskClick} />
                 {textTasks.map((task) => (
                   <TaskCard
@@ -225,7 +225,7 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ onTaskClick }) => {
             </TabsContent>
             
             <TabsContent value="data" className="p-4 space-y-4 mt-0">
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {dataTasks.map((task) => (
                   <TaskCard
                     key={task.id}

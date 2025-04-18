@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { 
   Pointer, 
@@ -14,24 +13,14 @@ import {
   RotateCcw,
   Save,
   Download,
+  Eraser,
   LucideIcon
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Separator } from '@/components/ui/separator';
 
-export type ToolType = 'select' | 'pen' | 'rectangle' | 'circle' | 'text' | 'arrow' | 'image';
-
-interface ToolBarProps {
-  activeTool: ToolType;
-  setActiveTool: (tool: ToolType) => void;
-  onClear: () => void;
-  onZoomIn: () => void;
-  onZoomOut: () => void;
-  onUndo: () => void;
-  onSave?: () => void;
-  onExport?: () => void;
-}
+export type ToolType = 'select' | 'pen' | 'rectangle' | 'circle' | 'text' | 'arrow' | 'image' | 'eraser';
 
 interface ToolButtonProps {
   icon: LucideIcon;
@@ -59,6 +48,17 @@ const ToolButton: React.FC<ToolButtonProps> = ({ icon: Icon, label, isActive = f
   </TooltipProvider>
 );
 
+interface ToolBarProps {
+  activeTool: ToolType;
+  setActiveTool: (tool: ToolType) => void;
+  onClear: () => void;
+  onZoomIn: () => void;
+  onZoomOut: () => void;
+  onUndo: () => void;
+  onSave?: () => void;
+  onExport?: () => void;
+}
+
 const ToolBar: React.FC<ToolBarProps> = ({ 
   activeTool, 
   setActiveTool, 
@@ -83,6 +83,12 @@ const ToolBar: React.FC<ToolBarProps> = ({
           label="Draw" 
           isActive={activeTool === 'pen'} 
           onClick={() => setActiveTool('pen')} 
+        />
+        <ToolButton 
+          icon={Eraser} 
+          label="Eraser" 
+          isActive={activeTool === 'eraser'} 
+          onClick={() => setActiveTool('eraser')} 
         />
         <ToolButton 
           icon={Square} 
