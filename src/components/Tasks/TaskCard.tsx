@@ -91,7 +91,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
           `bg-task-${color}/10`, 
           `text-task-${color}`
         )}>
-          <Icon className="h-5 w-5" />
+          {Icon && <Icon className="h-5 w-5" />}
         </div>
         <div className="flex-1">
           <h3 className="font-medium text-sm">{title}</h3>
