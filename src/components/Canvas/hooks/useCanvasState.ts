@@ -1,13 +1,14 @@
 
 import { useState } from 'react';
 import { Task } from '../../Tasks/TaskCard';
-import { CanvasTask, DrawingPath, ShapeElement, TextElement, PopupState } from '../types';
+import { CanvasTask, DrawingPath, ShapeElement, TextElement, PopupState, Connection } from '../types';
 import { toast } from '@/components/ui/use-toast';
+import { v4 as uuidv4 } from 'uuid';
 
 export const useCanvasState = () => {
   const [zoom, setZoom] = useState(1);
   const [tasks, setTasks] = useState<CanvasTask[]>([]);
-  const [connections, setConnections] = useState<{ start: string; end: string }[]>([]);
+  const [connections, setConnections] = useState<Connection[]>([]);
   const [currentPath, setCurrentPath] = useState<{ x: number; y: number }[]>([]);
   const [paths, setPaths] = useState<DrawingPath[]>([]);
   const [shapes, setShapes] = useState<ShapeElement[]>([]);
@@ -48,12 +49,17 @@ export const useCanvasState = () => {
       setShapes(shapes.slice(0, -1));
     } else if (texts.length > 0) {
       setTexts(texts.slice(0, -1));
+    } else if (connections.length > 0) {
+      // Remove the last connection first
+      setConnections(connections.slice(0, -1));
     } else if (tasks.length > 0) {
-      setTasks(tasks.slice(0, -1));
       const lastTask = tasks[tasks.length - 1];
+      // Remove connections associated with this task
       setConnections(connections.filter(
-        conn => conn.start !== lastTask.task.id && conn.end !== lastTask.task.id
+        conn => conn.start !== lastTask.id && conn.end !== lastTask.id
       ));
+      // Then remove the task
+      setTasks(tasks.slice(0, -1));
     }
   };
 

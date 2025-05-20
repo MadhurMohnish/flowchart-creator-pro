@@ -185,7 +185,19 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({ onAddTask }) => {
     if (result.success) {
       const { tasks: savedTasks, connections: savedConnections, paths: savedPaths, shapes: savedShapes, texts: savedTexts } = result.data;
       setTasks(savedTasks);
-      setConnections(savedConnections);
+      
+      // Ensure all connections have IDs
+      const connectionsWithIds = savedConnections.map(conn => {
+        if (!conn.id) {
+          return {
+            ...conn,
+            id: `conn-${uuidv4().substring(0, 8)}`
+          };
+        }
+        return conn;
+      });
+      
+      setConnections(connectionsWithIds);
       setPaths(savedPaths);
       setShapes(savedShapes);
       setTexts(savedTexts);
