@@ -47,11 +47,16 @@ const CanvasDropZone: React.FC<CanvasDropZoneProps> = ({
   return (
     <div 
       ref={dropZoneRef}
-      className="w-full h-full canvas-grid bg-canvas-background"
+      className="w-full h-full bg-gray-900/5 dark:bg-gray-950"
       style={{ 
         transform: `scale(${zoom})`,
         transformOrigin: 'center',
-        transition: 'transform 0.2s ease-out'
+        transition: 'transform 0.2s ease-out',
+        backgroundImage: `
+          linear-gradient(to right, rgba(100, 116, 139, 0.06) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(100, 116, 139, 0.06) 1px, transparent 1px)
+        `,
+        backgroundSize: '20px 20px',
       }}
       onDrop={handleDrop}
       onDragOver={onDragOver}

@@ -2,6 +2,7 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { LucideIcon } from 'lucide-react';
+import { Card } from '@/components/ui/card';
 
 export interface Task {
   id: string;
@@ -27,7 +28,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
   isOnCanvas = false,
   position
 }) => {
-  const { title, description, icon: Icon, color } = task;
+  const { title, description, icon: Icon, color, category } = task;
   
   const handleDragStart = (e: React.DragEvent) => {
     try {
@@ -64,23 +65,43 @@ const TaskCard: React.FC<TaskCardProps> = ({
     }
   };
 
-  const style = position ? {
-    position: 'absolute',
-    left: `${position.x}px`,
-    top: `${position.y}px`,
-  } as React.CSSProperties : {};
+  const bgColor = {
+    blue: 'bg-blue-50',
+    green: 'bg-green-50',
+    purple: 'bg-purple-50',
+    orange: 'bg-orange-50',
+    red: 'bg-red-50'
+  };
+  
+  const iconBgColor = {
+    blue: 'bg-blue-100',
+    green: 'bg-green-100',
+    purple: 'bg-purple-100',
+    orange: 'bg-orange-100',
+    red: 'bg-red-100'
+  };
+  
+  const iconColor = {
+    blue: 'text-blue-600',
+    green: 'text-green-600',
+    purple: 'text-purple-600',
+    orange: 'text-orange-600',
+    red: 'text-red-600'
+  };
 
   return (
-    <div
+    <Card
       className={cn(
-        'task-card',
-        `task-${color}`,
+        'task-card border shadow-sm hover:shadow-md transition-shadow',
         isOnCanvas ? 'min-w-[180px]' : 'w-full',
         isOnCanvas ? 'animate-scale-in' : '',
-        isOnCanvas && 'z-10',
-        'relative cursor-pointer'
+        'relative cursor-pointer p-3'
       )}
-      style={style}
+      style={position ? {
+        position: 'absolute',
+        left: `${position.x}px`,
+        top: `${position.y}px`,
+      } as React.CSSProperties : {}}
       draggable={isDraggable}
       onDragStart={handleDragStart}
       onClick={handleClick}
@@ -88,23 +109,19 @@ const TaskCard: React.FC<TaskCardProps> = ({
       <div className="flex items-start gap-3">
         <div className={cn(
           'p-2 rounded-lg', 
-          `bg-task-${color}/10`, 
-          `text-task-${color}`
+          iconBgColor[color], 
+          iconColor[color]
         )}>
           {Icon && <Icon className="h-5 w-5" />}
         </div>
         <div className="flex-1">
           <h3 className="font-medium text-sm">{title}</h3>
-          {!isOnCanvas && (
+          {(!isOnCanvas || true) && (
             <p className="text-xs text-muted-foreground line-clamp-2">{description}</p>
           )}
         </div>
       </div>
-      
-      {isOnCanvas && (
-        <div className="absolute -right-2 -bottom-2 h-4 w-4 bg-primary rounded-full opacity-70 hover:opacity-100 transition-opacity" />
-      )}
-    </div>
+    </Card>
   );
 };
 

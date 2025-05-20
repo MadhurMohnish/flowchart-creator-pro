@@ -4,6 +4,7 @@ import { Task } from '../Tasks/TaskCard';
 export interface CanvasTask {
   task: Task;
   position: { x: number; y: number };
+  id: string; // Unique ID for each instance on the canvas
 }
 
 export interface DrawingPath {
@@ -34,6 +35,12 @@ export interface PopupState {
   isOpen: boolean;
   position: { x: number; y: number };
   taskId: string;
+}
+
+export interface Connection {
+  start: string;
+  end: string;
+  id: string;
 }
 
 export type ToolType = 'select' | 'pen' | 'rectangle' | 'circle' | 'text' | 'arrow' | 'image' | 'eraser';

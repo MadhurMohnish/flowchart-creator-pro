@@ -1,40 +1,47 @@
 
 import React from 'react';
-import { CanvasTask } from './types';
+import { CanvasTask, Connection } from './types';
 
 interface CanvasConnectionsProps {
-  connections: { start: string; end: string }[];
+  connections: Connection[];
   tasks: CanvasTask[];
 }
 
 const CanvasConnections: React.FC<CanvasConnectionsProps> = ({ connections, tasks }) => {
   return (
     <>
-      {connections.map((connection, index) => {
-        const startTask = tasks.find(t => t.task.id === connection.start);
-        const endTask = tasks.find(t => t.task.id === connection.end);
+      {connections.map((connection) => {
+        const startTask = tasks.find(t => t.id === connection.start);
+        const endTask = tasks.find(t => t.id === connection.end);
         
         if (!startTask || !endTask) return null;
         
-        const startX = startTask.position.x + 90;
-        const startY = startTask.position.y + 25;
-        const endX = endTask.position.x;
-        const endY = endTask.position.y + 25;
+        const startX = startTask.position.x + 110; // Center of the card
+        const startY = startTask.position.y + 70; // Bottom connection point
+        const endX = endTask.position.x + 110; // Center of the card
+        const endY = endTask.position.y; // Top connection point
+        
+        // Calculate control points for the bezier curve
+        const midY = (startY + endY) / 2;
+        const controlPoint1Y = startY + Math.min(80, (endY - startY) / 2);
+        const controlPoint2Y = endY - Math.min(80, (endY - startY) / 2);
         
         return (
-          <g key={`connection-${index}`}>
+          <g key={connection.id}>
             <path
-              d={`M ${startX} ${startY} C ${startX + 50} ${startY}, ${endX - 50} ${endY}, ${endX} ${endY}`}
+              d={`M ${startX} ${startY} C ${startX} ${controlPoint1Y}, ${endX} ${controlPoint2Y}, ${endX} ${endY}`}
               fill="none"
-              stroke="rgba(90, 162, 245, 0.6)"
+              stroke="rgba(100, 116, 139, 0.5)"
               strokeWidth="2"
               className="connection-line"
             />
+            
+            {/* Circle at the end of the connection */}
             <circle 
               cx={endX} 
               cy={endY} 
               r="3" 
-              fill="rgba(90, 162, 245, 0.9)" 
+              fill="rgba(100, 116, 139, 0.8)" 
             />
           </g>
         );
